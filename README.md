@@ -1,8 +1,5 @@
 # shopifyChallenge
 
-###  first of all i want to thank you for giving me this opportunity
-
-
 ### for accomplish the challenge i used:
  * #### React framework for the client/FrontEnd. 
 * #### Node.js - Apollo - Graphql - mySQL database for the server.
