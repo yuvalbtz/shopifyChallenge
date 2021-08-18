@@ -15,9 +15,9 @@ module.exports = {
              }) 
 
 
-            function lineItemsTableCreation(){ // create and insert the order lineItems into mySQL 
+          function lineItemsTableCreation(){ // create and insert the order lineItems into mySQL 
                 let sql = 'CREATE TABLE lineItems(id INT AUTO_INCREMENT PRIMARY KEY,ShopifyOrderNumber DOUBLE , lineItemTitle VARCHAR(255), price DOUBLE)'
-                db.query(sql, (err, res) => {
+               db.query(sql, (err, res) => {
                     if(err) throw err 
                    if(res){
                        data.orders.forEach(order =>{
@@ -31,7 +31,7 @@ module.exports = {
                                 price:Number(item.price) * item.quantity,
                               
                             }
-                            db.query(insertItems, lineItemsSQL, (err, res) => {
+                           db.query(insertItems, lineItemsSQL, (err, res) => {
                                 if(err) throw err 
                               // console.log(res);
                             })     
@@ -47,7 +47,7 @@ module.exports = {
 
           function ordersTableCreation(){ // create and insert the orders into mySQL 
             let sql = 'CREATE TABLE orders(id INT AUTO_INCREMENT PRIMARY KEY, ShopifyOrderNumber DOUBLE, CustomerFullName VARCHAR(255),OrderDate VARCHAR(255),OrderSummaryAmount DOUBLE,ItemsSumQuantity DOUBLE)'
-            db.query(sql, (err, result) => {
+             db.query(sql, (err, result) => {
                 if(result){
                     let insertOrders  = 'INSERT INTO orders SET ?'
                     data.orders.forEach(order => {
@@ -59,7 +59,7 @@ module.exports = {
                             ItemsSumQuantity:order.line_items.length 
                         }
                         
-                        db.query(insertOrders, orderSQL, (err, res) => {
+                      db.query(insertOrders, orderSQL, (err, res) => {
                             if(err) throw err 
                             //console.log(res);
                         })     
@@ -72,33 +72,35 @@ module.exports = {
 
         try {
             
-            // if the lineItems TAble Exist we want to recreate it with the updated Data from the API 
+            // if the lineItems TAble is not Exist we want to create it with the updated Data from the API 
            let deleteLineItems = 'DROP TABLE lineItems'
-           let lineItemsExist = 'SELECT * FROM lineItems'
+           let lineItemsExist = 'CREATE TABLE IF NOT EXISTS lineItems(id INT AUTO_INCREMENT PRIMARY KEY,ShopifyOrderNumber DOUBLE , lineItemTitle VARCHAR(255), price DOUBLE)'
             
           db.query(lineItemsExist, (err, res) => {
                 if(res){
-                    db.query(deleteLineItems,(err, res) => {        
+                    console.log(err);
+                    db.query(deleteLineItems,(err, result) => {        
+                    if(result){
                         lineItemsTableCreation() 
+                        console.log('lineItems table ReCreated!');
+                       }
+                     
                       })
-                }else{
-                    lineItemsTableCreation()
                 }
             }) 
                
             
-                // if the orders TABLE Exist we want to recreate it with the updated Data from the API 
-                 let ordersExist = 'SELECT * FROM orders';
+                // if the orders TABLE is not Exist we want to create it with the Data from the API 
+                 let ordersNotExist = 'CREATE TABLE IF NOT EXISTS orders(id INT AUTO_INCREMENT PRIMARY KEY, ShopifyOrderNumber DOUBLE, CustomerFullName VARCHAR(255),OrderDate VARCHAR(255),OrderSummaryAmount DOUBLE,ItemsSumQuantity DOUBLE)';
                  let deleteOrders = 'DROP TABLE orders'
-                 db.query(ordersExist, (err, res) =>{
-                  if(res){
-                    db.query(deleteOrders, (err, res) => {
-                        if(res){
-                            ordersTableCreation() 
+                 db.query(ordersNotExist, (err, res) =>{
+                    if(res){
+                    db.query(deleteOrders, (err, result) => { // if the Table Exist we want to recreate it with the updated data on refresh
+                        if(result){
+                          ordersTableCreation() 
+                          console.log('orders table ReCreated!');
                         }
                     })  
-                  }else { 
-                    ordersTableCreation()
                   }
                 })
                 
@@ -106,7 +108,7 @@ module.exports = {
                   let selectOrders = new Promise((resolve, reject) =>{
                     let SelectOrders = 'SELECT * FROM orders';
                     db.query(SelectOrders,(err,results) => resolve(Object.values(JSON.parse(JSON.stringify(results)))));
-                      
+                   
                 })
                
              return selectOrders;  
